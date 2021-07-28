@@ -14,18 +14,18 @@ app.secret_key = "any random string"
 with app.app_context():
     db.create_all()
 
-# @app.route("/")
-# def index():
-#     df = pd.read_csv('books.csv', index_col='isbn')
-#     for ind in df.index:
-#         try:
-#             b = Bookdetails(id=ind,title=df['title'][ind],author=df['author'][ind],year=str(df['year'][ind]))
-#             db.session.add(b)
-#         except Exception as e:
-#             print("pandas ind",e)
-#     db.session.commit()
-#     user = Bookdetails.query.all()
-#     return render_template("success.html",users=user)
+@app.route("/")
+def index():
+    df = pd.read_csv('books.csv', index_col='isbn')
+    for ind in df.index:
+        try:
+            b = Bookdetails(id=ind,title=df['title'][ind],author=df['author'][ind],year=str(df['year'][ind]))
+            db.session.add(b)
+        except Exception as e:
+            print("pandas ind",e)
+    db.session.commit()
+    user = Bookdetails.query.all()
+    return render_template("success.html",users=user)
 
 
 
@@ -109,32 +109,72 @@ def books():
             book4 = Bookdetails.query.filter(Bookdetails.year.ilike(tag)).all()
             book = book1+book2+book3+book4
         elif(val=="id"):
-            # x=Bookdetails+".{val}."+ilike(tag)
+           
             print("val=",val)
             book = Bookdetails.query.filter(Bookdetails.id.ilike(tag)).all()
         elif(val=="title"):
-            # x=Bookdetails+".{val}."+ilike(tag)
+           
             print("val=",val)
             book = Bookdetails.query.filter(Bookdetails.title.ilike(tag)).all()
         elif(val=="author"):
-            # x=Bookdetails+".{val}."+ilike(tag)
+           
             print("val=",val)
             book = Bookdetails.query.filter(Bookdetails.author.ilike(tag)).all()
         elif(val=="year"):
-            # x=Bookdetails+".{val}."+ilike(tag)
+           
             print("val=",val)
             book = Bookdetails.query.filter(Bookdetails.year.ilike(tag)).all()
             # book=Bookdetails.query.filter_by(val)
-        print(book)
+        # print(book)
         email = session['email']
         flag = True
         return render_template("mainpage.html",email = email,flag = flag,books=book)
     else:
         return redirect('/home')
 
-@app.route("/<id>",methods=["GET"])
+@app.route("/id/<id>",methods=["POST","GET"])
 def id(id):
     # session.pop('email',None)
-    print(id)
-    id1=request.args.get("id")
-    return f"isbn number {id1}"
+    # print()
+    # id1=request.args.get("bookname")
+    # books = Bookdetails.query.filter(Bookdetails.id==id).first()
+    # # book = Bookdetails.query.get(Bookdetails.id==id).all()
+    # # print(book.id)
+    # return render_template("review.html",book=books,flag=True)
+    # return f"isbn number {id} {book.id} {book.title} {book.author}"
+    det = Bookdetails.query.filter(Bookdetails.id==id).all()
+    reviews_display = reviews.query.filter(reviews.id==id).all()
+    session['id'] = id
+    flag_review = False
+    if 'email' in session:
+        email = session['email']
+        try:
+            existing_user = reviews.query.filter(and_(reviews.id==id,reviews.email==email)).first()
+            if existing_user.email != None:
+                flag_review = False
+        except:
+           
+            flag_review = True
+    
+        return render_template('review.html',reviews=reviews_display,uname=email,flag_review=flag_review,flag=True,details=det)
+    else:
+        return render_template('review.html',reviews=reviews_display,flag_review=flag_review,flag=False,details=det)
+
+@app.route("/review", methods=['POST','GET'])
+def review():
+    if request.method == 'GET':
+        return render_template('review.html')
+    else:
+        review = request.form.get('review')
+        rating = request.form.get('rating')
+        email = session['email']
+        id = session['id']
+        # print("from /review , user= ",user," book = ",bookid)
+        add_review = reviews(id=id,email=email,review=review,rating=int(rating))
+        db.session.add(add_review)
+        db.session.commit()
+        det = Bookdetails.query.filter(Bookdetails.id==id).all()
+        reviews_display = reviews.query.filter(reviews.id==id).all()
+        return render_template('review.html', reviews=reviews_display, flag_review=False, uname=email, flag=True, details=det)
+
+
