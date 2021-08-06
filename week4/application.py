@@ -155,31 +155,50 @@ def id(id):
     det = Bookdetails.query.filter(Bookdetails.id==id).all()
     reviews_display = reviews.query.filter(reviews.id==id).all()
     session['id'] = id
-    email=session['email']
-    flag_review = False
-    delbook=False
+    # email=session['email']
+    # flag_review = False
+    # delbook=False
     
-                # flash("Book is added into Shelf")
+    #             # flash("Book is added into Shelf")
 
-    if 'email' in session:
-        email = session['email']
-        try:
-            s = shelf.query.filter(and_(shelf.id==id, shelf.email==email)).first()
-            print("shelf submit files = ",s.email,s.id)
-            delbook=True
-        except:
-            delbook=False
-        try:
-            existing_user = reviews.query.filter(and_(reviews.id==id,reviews.email==email)).first()
-            if existing_user.email != None:
-                flag_review = False
-        except:
+    # if 'email' in session:
+    #     email = session['email']
+    #     try:
+    #         s = shelf.query.filter(and_(shelf.id==id, shelf.email==email)).first()
+    #         print("shelf submit files = ",s.email,s.id)
+    #         delbook=True
+    #     except:
+    #         delbook=False
+    #     try:
+    #         existing_user = reviews.query.filter(and_(reviews.id==id,reviews.email==email)).first()
+    #         if existing_user.email != None:
+    #             flag_review = False
+    #     except:
            
-            flag_review = True
+    #         flag_review = True
     
-        return render_template('review.html',delbook=delbook,reviews=reviews_display,uname=email,flag_review=flag_review,flag=True,details=det)
-    else:
-        return render_template('review.html',reviews=reviews_display,flag_review=flag_review,flag=False,details=det)
+    #     return render_template('review.html',delbook=delbook,reviews=reviews_display,uname=email,flag_review=flag_review,flag=True,details=det)
+    # else:
+        # return render_template('review.html',reviews=reviews_display,flag_review=flag_review,flag=False,details=det)
+    bookdetails=[]
+    for each in det:
+        context = {'isbn':each.id, 'Title':each.title,'Author':each.author, 'Year':each.year}
+        # print(context)
+        bookdetails.append(context)
+        context={}
+    
+    reviews_dict=[]
+    for each in reviews_display:
+        print(each)
+        context = {'id':each.id, 'email':each.email,'review':each.review, 'rating':each.rating}
+        # print(context)
+        reviews_dict.append(context)
+        context={}
+
+
+    payload = {"bookdetais":bookdetails,"reviews_dict":reviews_dict}
+
+    return jsonify(payload)
 
 @app.route("/review", methods=['POST','GET'])
 def review():
