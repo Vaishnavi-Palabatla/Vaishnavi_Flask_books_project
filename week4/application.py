@@ -1,4 +1,4 @@
-from flask import Flask,render_template, request, session
+from flask import Flask,render_template, request, session, jsonify
 # from flask.wrappers import Request
 from operator import and_
 from models import *
@@ -128,9 +128,17 @@ def books():
             book = Bookdetails.query.filter(Bookdetails.year.ilike(tag)).all()
             # book=Bookdetails.query.filter_by(val)
         # print(book)
-        email = session['email']
-        flag = True
-        return render_template("mainpage.html",email = email,flag = flag,books=book)
+        store_book=[]
+        for each in book:
+            context = {'isbn':each.id, 'Title':each.title,'Author':each.author, 'Year':each.year}
+            # print(context)
+            store_book.append(context)
+            context={}
+
+        # email = session['email']
+        # flag = True
+        # return render_template("mainpage.html",email = email,flag = flag,books=book)
+        return jsonify(store_book)
     else:
         return redirect('/')
 
